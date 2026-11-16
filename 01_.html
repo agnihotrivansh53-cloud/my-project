@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MentorBridge | Student Mentorship Matching System</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.5; }
+
+    /* Top Navigation */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+    .role-switcher { display: flex; align-items: center; gap: 0.75rem; }
+    select, input, textarea {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    select:focus, input:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+    /* Tabs */
+    nav.tabs {
+      background: var(--card);
+      padding: 0 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav.tabs button {
+      background: none;
+      border: none;
+      padding: 0.85rem 0.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    nav.tabs button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* Layout & Cards */
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.25rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+    .subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.75rem; }
+
+    /* Badges & Tags */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-match { background: #dbeafe; color: #1e40af; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-accepted { background: #dcfce7; color: #166534; }
+    .badge-declined { background: #fee2e2; color: #991b1b; }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0; }
+    .tag { background: #f1f5f9; color: #334155; font-size: 0.78rem; padding: 0.2rem 0.55rem; border-radius: 4px; }
+
+    /* Buttons */
+    .btn {
+      padding: 0.55rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+    /* Forms & Tables */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { background: #f1f5f9; font-weight: 600; }
+
+    /* Stats Banner */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-box { background: var(--card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+    .stat-box .num { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+    .stat-box .lbl { font-size: 0.8rem; color: var(--muted); }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; background: #0f172a; color: white;
+      padding: 0.75rem 1.25rem; border-radius: 8px; font-size: 0.9rem; display: none; z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">🎓 MentorBridge <span style="font-weight:400; font-size:0.85rem; color:var(--muted);">| Academic Mentorship System</span></div>
+  <div class="role-switcher">
+    <label for="activeUserSelect" style="font-size:0.85rem; font-weight:600; white-space:nowrap;">Active Session:</label>
+    <select id="activeUserSelect" onchange="switchUser(this.value)"></select>
+  </div>
+</header>
+
+<nav class="tabs" id="navTabs"></nav>
+
+<main id="appContainer"></main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // --- 1. INITIAL DATA & STATE MANAGEMENT ---
+  const defaultState = {
+    currentUserId: 'mentee_1',
+    users: [
+      {
+        id: 'mentee_1', role: 'mentee', name: 'Aarav Sharma', year: '1st Year B.Tech',
+        department: 'Computer Science',
+        interests: ['AI/ML', 'Web Development', 'Hackathons'],
+        goals: ['Research Internship', 'Open Source', 'DSA'],
+        availability: ['Mon Evening', 'Wed Evening', 'Sat Morning'],
+        bio: 'Freshman looking for guidance on building ML projects and preparing for summer internships.'
+      },
+      {
+        id: 'mentee_2', role: 'mentee', name: 'Priya Nair', year: '2nd Year B.Sc',
+        department: 'Data Science',
+        interests: ['Data Analytics', 'FinTech', 'Cloud Computing'],
+        goals: ['Industry Placement', 'Portfolio Building'],
+        availability: ['Tue Evening', 'Sat Morning', 'Sun Afternoon'],
+        bio: 'Interested in financial data modeling and cloud deployments.'
+      },
+      {
+        id: 'mentor_1', role: 'mentor', name: 'Rohan Verma', year: '4th Year B.Tech',
+        department: 'Computer Science', capacity: 3,
+        interests: ['AI/ML', 'Deep Learning', 'Web Development', 'Hackathons'],
+        goals: ['Research Internship', 'Open Source', 'Higher Studies'],
+        availability: ['Mon Evening', 'Wed Evening', 'Sun Afternoon'],
+        bio: 'Published 2 IEEE papers in NLP; incoming SDE intern. Happy to guide juniors in ML & dev.'
+      },
+      {
+        id: 'mentor_2', role: 'mentor', name: 'Ananya Iyer', year: '4th Year B.Tech',
+        department: 'Information Technology', capacity: 2,
+        interests: ['Cloud Computing', 'Data Analytics', 'FinTech', 'DevOps'],
+        goals: ['Industry Placement', 'Portfolio Building', 'DSA'],
+        availability: ['Tue Evening', 'Sat Morning'],
+        bio: 'AWS Certified Solutions Architect. Mentored 15+ students for tech placements.'
+      },
+      {
+        id: 'mentor_3', role: 'mentor', name: 'Kabir Mehta', year: '3rd Year B.Tech',
+        department: 'Electronics', capacity: 2,
+        interests: ['Embedded Systems', 'Robotics', 'Open Source'],
+        goals: ['Hardware Projects', 'Open Source', 'Hackathons'],
+        availability: ['Thu Evening', 'Sat Morning'],
+        bio: 'Robotics club lead and GSoC contributor.'
+      },
+      {
+        id: 'admin_1', role: 'admin', name: 'Dr. S. Kulkarni', year: 'Faculty Coordinator',
+        department: 'Academic Affairs', interests: [], goals: [], availability: [], bio: 'Program Administrator'
+      }
+    ],
+    invitations: [
+      {
+        id: 'inv_101', menteeId: 'mentee_2', mentorId: 'mentor_2', status: 'accepted',
+        message: 'Hi Ananya, I would love guidance on Cloud and FinTech placements.',
+        createdAt: '2026-11-10'
+      }
+    ],
+    meetings: [
+      {
+        id: 'mtg_1', menteeId: 'mentee_2', mentorId: 'mentor_2', date: '2026-11-14',
+        duration: '45 mins', topic: 'Resume Review & AWS Roadmap',
+        notes: 'Reviewed GitHub projects; decided to build a serverless FinTech API over the next 2 weeks.'
+      }
+    ],
+    feedback: [
+      {
+        id: 'fb_1', fromId: 'mentee_2', toId: 'mentor_2', rating: 5,
+        comment: 'Super clear roadmap and actionable resume tips!'
+      }
+    ]
+  };
+
+  let state = JSON.parse(localStorage.getItem('mentorBridgeState')) || defaultState;
+  let activeTab = 'discover';
+
+  function saveState() {
+    localStorage.setItem('mentorBridgeState', JSON.stringify(state));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+
+  function getCurrentUser() {
+    return state.users.find(u => u.id === state.currentUserId);
+  }
+
+  // --- 2. MATCHING ALGORITHM (Interests 45% + Goals 35% + Availability 20%) ---
+  function calculateMatch(mentee, mentor) {
+    const overlap = (arr1, arr2) => {
+      if (!arr1.length || !arr2.length) return 0;
+      const set2 = new Set(arr2.map(s => s.toLowerCase().trim()));
+      const matches = arr1.filter(item => set2.has(item.toLowerCase().trim()));
+      return matches.length / Math.max(arr1.length, 1);
+    };
+
+    const interestScore = overlap(mentee.interests, mentor.interests);
+    const goalScore = overlap(mentee.goals, mentor.goals);
+    const availScore = overlap(mentee.availability, mentor.availability);
+
+    const total = Math.round((interestScore * 0.45 + goalScore * 0.35 + availScore * 0.20) * 100);
+    const sharedInterests = mentee.interests.filter(i => mentor.interests.map(x => x.toLowerCase()).includes(i.toLowerCase()));
+    const sharedAvail = mentee.availability.filter(a => mentor.availability.map(x => x.toLowerCase()).includes(a.toLowerCase()));
+
+    return { score: total, sharedInterests, sharedAvail };
+  }
+
+  // --- 3. NAVIGATION & ROLE SWITCHING ---
+  function populateUserDropdown() {
+    const select = document.getElementById('activeUserSelect');
+    select.innerHTML = state.users.map(u =>
+      `<option value="${u.id}" ${u.id === state.currentUserId ? 'selected' : ''}>
+        ${u.name} (${u.role.toUpperCase()})
+      </option>`
+    ).join('');
+  }
+
+  function switchUser(userId) {
+    state.currentUserId = userId;
+    saveState();
+    const user = getCurrentUser();
+    activeTab = user.role === 'mentee' ? 'discover' : (user.role === 'mentor' ? 'requests' : 'overview');
+    renderApp();
+  }
+
+  function setTab(tab) {
+    activeTab = tab;
+    renderApp();
+  }
+
+  function renderTabs() {
+    const user = getCurrentUser();
+    const nav = document.getElementById('navTabs');
+    let tabs = [];
+
+    if (user.role === 'mentee') {
+      tabs = [
+        { id: 'discover', label: '🔍 Find Mentors' },
+        { id: 'requests', label: '✉️ My Invitations' },
+        { id: 'meetings', label: '📅 Meetings & Feedback' },
+        { id: 'profile', label: '👤 Profile & Preferences' }
+      ];
+    } else if (user.role === 'mentor') {
+      tabs = [
+        { id: 'requests', label: '📥 Mentee Requests' },
+        { id: 'meetings', label: '📅 Meetings & Feedback' },
+        { id: 'profile', label: '👤 Profile & Preferences' }
+      ];
+    } else {
+      tabs = [
+        { id: 'overview', label: '📊 Admin Oversight' },
+        { id: 'directory', label: '👥 Users & Pairings' }
+      ];
+    }
+
+    nav.innerHTML = tabs.map(t =>
+      `<button class="${activeTab === t.id ? 'active' : ''}" onclick="setTab('${t.id}')">${t.label}</button>`
+    ).join('');
+  }
+
+  // --- 4. VIEW RENDERERS ---
+  function renderApp() {
+    populateUserDropdown();
+    renderTabs();
+    const container = document.getElementById('appContainer');
+    const user = getCurrentUser();
+
+    if (user.role === 'mentee') {
+      if (activeTab === 'discover') container.innerHTML = renderMenteeDiscover(user);
+      if (activeTab === 'requests') container.innerHTML = renderInvitationsView(user);
+      if (activeTab === 'meetings') container.innerHTML = renderMeetingsAndFeedback(user);
+      if (activeTab === 'profile') container.innerHTML = renderProfileForm(user);
+    } else if (user.role === 'mentor') {
+      if (activeTab === 'requests') container.innerHTML = renderInvitationsView(user);
+      if (activeTab === 'meetings') container.innerHTML = renderMeetingsAndFeedback(user);
+      if (activeTab === 'profile') container.innerHTML = renderProfileForm(user);
+    } else {
+      if (activeTab === 'overview') container.innerHTML = renderAdminOverview();
+      if (activeTab === 'directory') container.innerHTML = renderAdminDirectory();
+    }
+  }
+
+  // MENTEE: MATCHING & DISCOVERY
+  function renderMenteeDiscover(mentee) {
+    const mentors = state.users.filter(u => u.role === 'mentor').map(mentor => ({
+      mentor,
+      match: calculateMatch(mentee, mentor)
+    })).sort((a, b) => b.match.score - a.match.score);
+
+    return `
+      <div class="section-header">
+        <div>
+          <h2>Recommended Senior Mentors</h2>
+          <p class="subtitle">Ranked by academic interests (45%), career goals (35%), and schedule overlap (20%).</p>
+        </div>
+        <button class="btn btn-outline" onclick="setTab('profile')">Update My Preferences</button>
+      </div>
+      <div class="grid">
+        ${mentors.map(({ mentor, match }) => {
+          const existingInv = state.invitations.find(i => i.menteeId === mentee.id && i.mentorId === mentor.id);
+          const acceptedCount = state.invitations.filter(i => i.mentorId === mentor.id && i.status === 'accepted').length;
+          const isFull = acceptedCount >= (mentor.capacity || 3);
+
+          return `
+            <div class="card">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                  <h3>${mentor.name}</h3>
+                  <span class="badge badge-match">${match.score}% Match</span>
+                </div>
+                <div class="subtitle">${mentor.year} • ${mentor.department} (${acceptedCount}/${mentor.capacity} slots filled)</div>
+                <p style="font-size:0.88rem; margin-bottom:0.75rem;">${mentor.bio}</p>
+
+                <div style="font-size:0.8rem; font-weight:600;">Interests:</div>
+                <div class="tags">${mentor.interests.map(i => `<span class="tag">${i}</span>`).join('')}</div>
+
+                <div style="font-size:0.8rem; font-weight:600;">Goals Supported:</div>
+                <div class="tags">${mentor.goals.map(g => `<span class="tag">${g}</span>`).join('')}</div>
+
+                <div style="font-size:0.8rem; color:var(--muted); margin-top:0.5rem;">
+                  <strong>Shared Slots:</strong> ${match.sharedAvail.length ? match.sharedAvail.join(', ') : 'Flexible / None exact'}
+                </div>
+              </div>
+
+              <div class="btn-group">
+                ${existingInv
+                  ? `<button class="btn btn-outline" disabled>Invitation ${existingInv.status.toUpperCase()}</button>`
+                  : `<button class="btn btn-primary" ${isFull ? 'disabled' : ''} onclick="sendInvitation('${mentor.id}')">
+                      ${isFull ? 'Mentor Full' : 'Send Mentorship Invite'}
+                     </button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  // INVITATION & ACCEPTANCE WORKFLOW (BOTH ROLES)
+  function renderInvitationsView(user) {
+    const isMentee = user.role === 'mentee';
+    const list = state.invitations.filter(i => isMentee ? i.menteeId === user.id : i.mentorId === user.id);
+
+    return `
+      <div class="section-header">
+        <h2>${isMentee ? 'Sent Mentorship Invitations' : 'Incoming Mentee Requests'}</h2>
+      </div>
+      ${list.length === 0 ? `<div class="card"><p class="subtitle">No invitations found yet.</p></div>` : `
+        <div class="grid">
+          ${list.map(inv => {
+            const peer = state.users.find(u => u.id === (isMentee ? inv.mentorId : inv.menteeId));
+            return `
+              <div class="card">
+                <div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <h3>${peer.name}</h3>
+                    <span class="badge badge-${inv.status}">${inv.status.toUpperCase()}</span>
+                  </div>
+                  <div class="subtitle">${peer.year} • ${peer.department} • Sent ${inv.createdAt}</div>
+                  <p style="font-size:0.9rem; background:#f8fafc; padding:0.65rem; border-radius:6px; border:1px solid var(--border);">
+                    "${inv.message}"
+                  </p>
+                  <div class="tags" style="margin-top:0.75rem;">
+                    ${peer.interests.map(i => `<span class="tag">${i}</span>`).join('')}
+                  </div>
+                </div>
+                ${!isMentee && inv.status === 'pending' ? `
+                  <div class="btn-group">
+                    <button class="btn btn-success" onclick="respondInvitation('${inv.id}', 'accepted')">Accept</button>
+                    <button class="btn btn-danger" onclick="respondInvitation('${inv.id}', 'declined')">Decline</button>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `}
+    `;
+  }
+
+  // MEETING LOGS & FEEDBACK
+  function renderMeetingsAndFeedback(user) {
+    const activePairings = state.invitations.filter(i =>
+      i.status === 'accepted' && (i.menteeId === user.id || i.mentorId === user.id)
+    );
+    const myMeetings = state.meetings.filter(m => m.menteeId === user.id || m.mentorId === user.id);
+
+    return `
+      <div class="grid" style="grid-template-columns: 1fr 1.3fr;">
+        <div>
+          <div class="card" style="margin-bottom:1.25rem;">
+            <h3>Log a Mentorship Session</h3>
+            <p class="subtitle">Record session notes for active mentorship pairs.</p>
+            ${activePairings.length === 0 ? `<p style="font-size:0.88rem; color:var(--warning);">You need an accepted mentorship pairing to log meetings.</p>` : `
+              <form onsubmit="logMeeting(event)">
+                <div class="form-group">
+                  <label>Mentorship Partner</label>
+                  <select id="mtgPartner" required>
+                    ${activePairings.map(p => {
+                      const partnerId = p.menteeId === user.id ? p.mentorId : p.menteeId;
+                      const partner = state.users.find(u => u.id === partnerId);
+                      return `<option value="${partner.id}">${partner.name} (${partner.role})</option>`;
+                    }).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Date & Duration</label>
+                  <div style="display:flex; gap:0.5rem;">
+                    <input type="date" id="mtgDate" required value="2026-11-16" />
+                    <input type="text" id="mtgDuration" placeholder="e.g. 45 mins" required value="45 mins" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Topic Discussed</label>
+                  <input type="text" id="mtgTopic" placeholder="e.g., Project Architecture & Roadmap" required />
+                </div>
+                <div class="form-group">
+                  <label>Action Items / Notes</label>
+                  <textarea id="mtgNotes" rows="3" placeholder="Key takeaways and next steps..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Meeting Log</button>
+              </form>
+            `}
+          </div>
+
+          <div class="card">
+            <h3>Submit Program Feedback</h3>
+            <p class="subtitle">Rate your mentor/mentee experience.</p>
+            ${activePairings.length === 0 ? `<p style="font-size:0.88rem; color:var(--muted);">Available once paired.</p>` : `
+              <form onsubmit="submitFeedback(event)">
+                <div class="form-group">
+                  <label>Partner</label>
+                  <select id="fbPartner" required>
+                    ${activePairings.map(p => {
+                      const partnerId = p.menteeId === user.id ? p.mentorId : p.menteeId;
+                      const partner = state.users.find(u => u.id === partnerId);
+                      return `<option value="${partner.id}">${partner.name}</option>`;
+                    }).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Rating (1 to 5 Stars)</label>
+                  <select id="fbRating">
+                    <option value="5">⭐⭐⭐⭐⭐ (5 - Excellent)</option>
+                    <option value="4">⭐⭐⭐⭐ (4 - Very Good)</option>
+                    <option value="3">⭐⭐⭐ (3 - Good)</option>
+                    <option value="2">⭐⭐ (2 - Needs Improvement)</option>
+                    <option value="1">⭐ (1 - Poor)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Comments</label>
+                  <textarea id="fbComment" rows="2" placeholder="Share constructive feedback..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-outline">Submit Feedback</button>
+              </form>
+            `}
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:0.75rem;">Session History (${myMeetings.length})</h3>
+          ${myMeetings.length === 0 ? `<div class="card"><p class="subtitle">No sessions logged yet.</p></div>` :
+            myMeetings.map(m => {
+              const mentee = state.users.find(u => u.id === m.menteeId);
+              const mentor = state.users.find(u => u.id === m.mentorId);
+              return `
+                <div class="card" style="margin-bottom:1rem;">
+                  <div style="display:flex; justify-content:space-between;">
+                    <strong>${m.topic}</strong>
+                    <span class="badge badge-match">${m.date} • ${m.duration}</span>
+                  </div>
+                  <div class="subtitle">Mentor: ${mentor.name} | Mentee: ${mentee.name}</div>
+                  <p style="font-size:0.88rem;">${m.notes}</p>
+                </div>
+              `;
+            }).join('')
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  // PROFILE & PREFERENCES EDITOR
+  function renderProfileForm(user) {
+    return `
+      <div class="card" style="max-width:650px; margin:0 auto;">
+        <h3>Edit ${user.role.toUpperCase()} Profile & Matching Preferences</h3>
+        <p class="subtitle">Changes immediately recalculate compatibility scores across the platform.</p>
+        <form onsubmit="updateProfile(event)">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="profName" value="${user.name}" required />
+          </div>
+          <div class="form-group">
+            <label>Year & Department</label>
+            <div style="display:flex; gap:0.5rem;">
+              <input type="text" id="profYear" value="${user.year}" required />
+              <input type="text" id="profDept" value="${user.department}" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Academic Interests (comma-separated)</label>
+            <input type="text" id="profInterests" value="${user.interests.join(', ')}" required />
+          </div>
+          <div class="form-group">
+            <label>Career / Learning Goals (comma-separated)</label>
+            <input type="text" id="profGoals" value="${user.goals.join(', ')}" required />
+          </div>
+          <div class="form-group">
+            <label>Weekly Availability Slots (comma-separated)</label>
+            <input type="text" id="profAvail" value="${user.availability.join(', ')}" required />
+          </div>
+          ${user.role === 'mentor' ? `
+            <div class="form-group">
+              <label>Max Mentee Capacity</label>
+              <input type="number" id="profCap" min="1" max="10" value="${user.capacity || 3}" required />
+            </div>
+          ` : ''}
+          <div class="form-group">
+            <label>Short Bio</label>
+            <textarea id="profBio" rows="3">${user.bio}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Preferences</button>
+        </form>
+      </div>
+    `;
+  }
+
+  // ADMIN OVERSIGHT
+  function renderAdminOverview() {
+    const mentors = state.users.filter(u => u.role === 'mentor');
+    const mentees = state.users.filter(u => u.role === 'mentee');
+    const accepted = state.invitations.filter(i => i.status === 'accepted');
+    const avgRating = state.feedback.length
+      ? (state.feedback.reduce((acc, f) => acc + Number(f.rating), 0) / state.feedback.length).toFixed(1)
+      : 'N/A';
+
+    return `
+      <div class="section-header">
+        <h2>Institutional Mentorship Oversight</h2>
+        <button class="btn btn-outline" onclick="resetDemoData()">Reset Demo Data</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="num">${mentors.length} / ${mentees.length}</div><div class="lbl">Mentors / Mentees</div></div>
+        <div class="stat-box"><div class="num">${accepted.length}</div><div class="lbl">Active Pairings</div></div>
+        <div class="stat-box"><div class="num">${state.meetings.length}</div><div class="lbl">Logged Meetings</div></div>
+        <div class="stat-box"><div class="num">${avgRating} ★</div><div class="lbl">Avg Feedback Score</div></div>
+      </div>
+
+      <h3 style="margin-bottom:0.75rem;">Active & Pending Matches</h3>
+      <table style="margin-bottom:1.5rem;">
+        <thead>
+          <tr><th>Mentee</th><th>Mentor</th><th>Match Score</th><th>Status</th><th>Admin Action</th></tr>
+        </thead>
+        <tbody>
+          ${state.invitations.map(inv => {
+            const mentee = state.users.find(u => u.id === inv.menteeId);
+            const mentor = state.users.find(u => u.id === inv.mentorId);
+            const score = calculateMatch(mentee, mentor).score;
+            return `
+              <tr>
+                <td>${mentee.name} (${mentee.year})</td>
+                <td>${mentor.name} (${mentor.year})</td>
+                <td><span class="badge badge-match">${score}%</span></td>
+                <td><span class="badge badge-${inv.status}">${inv.status.toUpperCase()}</span></td>
+                <td>
+                  ${inv.status !== 'accepted'
+                    ? `<button class="btn btn-success" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="respondInvitation('${inv.id}', 'accepted')">Force Pair</button>`
+                    : `<button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="respondInvitation('${inv.id}', 'declined')">Unpair</button>`
+                  }
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <h3 style="margin-bottom:0.75rem;">Recent Feedback Logs</h3>
+      <table>
+        <thead><tr><th>From</th><th>To</th><th>Rating</th><th>Comment</th></tr></thead>
+        <tbody>
+          ${state.feedback.map(f => {
+            const from = state.users.find(u => u.id === f.fromId);
+            const to = state.users.find(u => u.id === f.toId);
+            return `<tr><td>${from.name}</td><td>${to.name}</td><td>${'⭐'.repeat(f.rating)}</td><td>${f.comment}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderAdminDirectory() {
+    return `
+      <div class="section-header"><h2>Registered Participants & Unmatched Mentees</h2></div>
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Interests</th><th>Availability</th></tr></thead>
+        <tbody>
+          ${state.users.filter(u => u.role !== 'admin').map(u => `
+            <tr>
+              <td><strong>${u.name}</strong><br><span style="font-size:0.8rem; color:var(--muted);">${u.year}</span></td>
+              <td>${u.role.toUpperCase()}</td>
+              <td>${u.department}</td>
+              <td>${u.interests.join(', ')}</td>
+              <td>${u.availability.join(', ')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // --- 5. ACTIONS ---
+  function sendInvitation(mentorId) {
+    const mentee = getCurrentUser();
+    const msg = prompt("Enter a short introduction message for your mentor:", `Hi! Our academic interests align well and I would appreciate your mentorship.`);
+    if (!msg) return;
+
+    state.invitations.push({
+      id: 'inv_' + Date.now(),
+      menteeId: mentee.id,
+      mentorId,
+      status: 'pending',
+      message: msg,
+      createdAt: new Date().toISOString().split('T')[0]
+    });
+    saveState();
+    showToast('Mentorship invitation sent!');
+    renderApp();
+  }
+
+  function respondInvitation(invId, status) {
+    const inv = state.invitations.find(i => i.id === invId);
+    if (inv) {
+      inv.status = status;
+      saveState();
+      showToast(`Invitation marked as ${status}.`);
+      renderApp();
+    }
+  }
+
+  function logMeeting(e) {
+    e.preventDefault();
+    const user = getCurrentUser();
+    const partnerId = document.getElementById('mtgPartner').value;
+    state.meetings.unshift({
+      id: 'mtg_' + Date.now(),
+      menteeId: user.role === 'mentee' ? user.id : partnerId,
+      mentorId: user.role === 'mentor' ? user.id : partnerId,
+      date: document.getElementById('mtgDate').value,
+      duration: document.getElementById('mtgDuration').value,
+      topic: document.getElementById('mtgTopic').value,
+      notes: document.getElementById('mtgNotes').value
+    });
+    saveState();
+    showToast('Meeting session logged!');
+    renderApp();
+  }
+
+  function submitFeedback(e) {
+    e.preventDefault();
+    const user = getCurrentUser();
+    state.feedback.unshift({
+      id: 'fb_' + Date.now(),
+      fromId: user.id,
+      toId: document.getElementById('fbPartner').value,
+      rating: Number(document.getElementById('fbRating').value),
+      comment: document.getElementById('fbComment').value
+    });
+    saveState();
+    showToast('Feedback submitted!');
+    renderApp();
+  }
+
+  function updateProfile(e) {
+    e.preventDefault();
+    const user = getCurrentUser();
+    const splitClean = val => val.split(',').map(s => s.trim()).filter(Boolean);
+
+    user.name = document.getElementById('profName').value;
+    user.year = document.getElementById('profYear').value;
+    user.department = document.getElementById('profDept').value;
+    user.interests = splitClean(document.getElementById('profInterests').value);
+    user.goals = splitClean(document.getElementById('profGoals').value);
+    user.availability = splitClean(document.getElementById('profAvail').value);
+    user.bio = document.getElementById('profBio').value;
+    if (user.role === 'mentor') {
+      user.capacity = Number(document.getElementById('profCap').value);
+    }
+
+    saveState();
+    showToast('Profile & matching preferences updated!');
+    renderApp();
+  }
+
+  function resetDemoData() {
+    localStorage.removeItem('mentorBridgeState');
+    location.reload();
+  }
+
+  // Boot application
+  renderApp();
+</script>
+</body>
+</html>
